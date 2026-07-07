@@ -1,13 +1,14 @@
-# theses-batch-dump-datagouv
+# theses-batch-dump
 
-[![build-test-pubtodockerhub](https://github.com/abes-esr/theses-batch-dump-datagouv/actions/workflows/build-test-pubtodockerhub.yml/badge.svg)](https://github.com/abes-esr/theses-batch-dump-datagouv/actions/workflows/build-test-pubtodockerhub.yml) [![Docker Pulls](https://img.shields.io/docker/pulls/abesesr/theses-batch-dump-datagouv.svg)](https://hub.docker.com/r/abesesr/theses-batch-dump-datagouv/)
+[![build-test-pubtodockerhub](https://github.com/abes-esr/theses-batch-dump/actions/workflows/build-test-pubtodockerhub.yml/badge.svg)](https://github.com/abes-esr/theses-batch-dump/actions/workflows/build-test-pubtodockerhub.yml) [![Docker Pulls](https://img.shields.io/docker/pulls/abesesr/theses-batch-dump.svg)](https://hub.docker.com/r/abesesr/theses-batch-dump/)
 
 Vous êtes sur le README usager. Si vous souhaitez accéder au README de développement, veuillez suivre ce lien : [README-dev](README-dev.md)
 
-Ce dépôt héberge le code source de l'application **theses-batch-dump-datagouv**.
+Ce dépôt héberge le code source de l'application **theses-batch-dump**.
 C'est un traitement planifié (Batch) qui extrait, transforme et exporte les thèses soutenues en France.
 
-**theses-batch-dump-datagouv** permet de :
+**theses-batch-dump** permet de :
+
 1. Récupérer de façon paginée les données des thèses de doctorat soutenues auprès de l'API de [theses.fr](https://theses.fr).
 2. Traiter et restructurer ces données au format attendu pour l'ouverture des données publiques.
 3. Générer localement des fichiers d'exports complets sous trois formats différents :
@@ -23,23 +24,27 @@ C'est un traitement planifié (Batch) qui extrait, transforme et exporte les th�
 L'application peut être packagée et démarrée dans un conteneur Docker.
 
 ### 1. Préparation de la configuration
+
 Copiez le fichier de distribution des variables d'environnement `.env-dist` pour créer votre fichier `.env` de production/test :
+
 ```bash
 cp .env-dist .env
 # Modifiez ensuite les valeurs dans le fichier .env (clés API data.gouv.fr, répertoire de sortie, modes, etc.)
 ```
 
 ### 2. Démarrage et exécution
+
 Pour exécuter le conteneur en utilisant vos variables d'environnement configurées :
 
 ```bash
 # Construction de l'image
-docker build -t abesesr/theses-batch-dump-datagouv .
+docker build -t abesesr/theses-batch-dump .
 
 # Lancement de l'image Docker (lie le répertoire local "./data" pour récupérer les fichiers d'exports)
-docker run --env-file .env -v %cd%/data:/app/data abesesr/theses-batch-dump-datagouv
+docker run --env-file .env -v %cd%/data:/app/data abesesr/theses-batch-dump
 ```
-*(Sur Linux/macOS, remplacez `%cd%` par `$(pwd)`)*
+
+_(Sur Linux/macOS, remplacez `%cd%` par `$(pwd)`)_
 
 Le conteneur va exécuter le Batch et s'arrêter après la fin de la génération des exports (et du téléversement si ce dernier est activé).
 Si la planification en arrière-plan est activée (`SCHEDULER_ENABLED=true`), le conteneur restera actif pour exécuter le batch périodiquement.

@@ -12,9 +12,9 @@
     </parent>
 
     <groupId>fr.abes.theses</groupId>
-    <artifactId>theses-batch-dump-datagouv</artifactId>
+    <artifactId>theses-batch-dump</artifactId>
     <version>1.0.0</version>
-    <name>theses-batch-dump-datagouv</name>
+    <name>theses-batch-dump</name>
     <description>Projet Spring Batch optimisé pour exporter les thèses et les téléverser sur data.gouv.fr</description>
 
     <properties>
