@@ -27,5 +27,9 @@ COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
 # Changement d'utilisateur pour exécuter en tant que "spring"
 USER spring:spring
 
+# Téléchargement d'une version fixe de l'agent OpenTelemetry pour la reproductibilité
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.3.0/opentelemetry-javaagent.jar /app/opentelemetry.jar
+
+
 # Point d'entrée de l'application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-javaagent:/app/opentelemetry.jar", "-jar", "app.jar"]
