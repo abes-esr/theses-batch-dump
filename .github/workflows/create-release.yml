@@ -21,7 +21,7 @@ on:
 jobs:
   create-release:
     # Appel du workflow réutilisable
-    uses: abes-esr/github-action/java-create-release.yml@main
+    uses: abes-esr/github-action/.github/workflows/java-create-release.yml@main
     with:
       versionType: ${{ github.event.inputs.versionType }}
     secrets:
