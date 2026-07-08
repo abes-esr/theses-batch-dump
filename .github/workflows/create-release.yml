@@ -1,0 +1,28 @@
+# ==============================================================================
+# WORKFLOW DECLENCHEUR (TRIGGER/CALLER) : Création de Release
+# Ce workflow permet de déclencher manuellement la release en demandant le type
+# de version, et appelle le workflow réutilisable local.
+# ==============================================================================
+name: "Create release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionType:
+        description: "Quel type de version ?"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  create-release:
+    # Appel du workflow réutilisable
+    uses: abes-esr/github-action/java-create-release.yml@main
+    with:
+      versionType: ${{ github.event.inputs.versionType }}
+    secrets:
+      TOKEN_GITHUB_FOR_GITHUB_ACTION: ${{ secrets.TOKEN_GITHUB_FOR_GITHUB_ACTION }}

@@ -1,0 +1,23 @@
+# ==============================================================================
+# WORKFLOW DECLENCHEUR (TRIGGER/CALLER) : Build, Test et Publication sur DockerHub
+# Ce workflow écoute les push et lancements manuels et appelle le workflow réutilisable local.
+# ==============================================================================
+name: "Build & Publish on DockerHub"
+
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+      - ".github/**"
+  workflow_dispatch:
+
+jobs:
+  buildx-pubtodockerhub-batch-dump:
+    # Appel du workflow réutilisable
+    uses: abes-esr/github-action/buildx-pubtodockerhub.yml@main
+    with:
+      dockerhub_image_prefix: "abesesr/theses"
+      docker_tag_target: "batch-dump"
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

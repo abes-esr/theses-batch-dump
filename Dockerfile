@@ -15,7 +15,7 @@ RUN mvn clean package -DskipTests
 # ===================================================================
 # Étape 2 : Image d'exécution (Runtime JRE)
 # ===================================================================
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre-alpine AS batch-dump
 WORKDIR /app
 
 # Création d'un groupe et utilisateur système "spring" pour des raisons de sécurité (non-root execution)
