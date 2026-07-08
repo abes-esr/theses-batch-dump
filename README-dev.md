@@ -17,6 +17,55 @@ L'application est structurée autour d'un unique Job Spring Batch `thesesUpdateJ
 
 ---
 
+## 📂 Rôle détaillé des Fichiers
+
+L'application est structurée en packages clairs sous `fr.abes.theses.batch` :
+
+### 🚀 Démarrage et Planification (`/scheduler`)
+
+- **[ThesesBatchApplication.java](src/main/java/fr/abes/theses/batch/ThesesBatchApplication.java)** : Classe de démarrage Spring Boot classique.
+- **[StartupJobRunner.java](src/main/java/fr/abes/theses/batch/scheduler/StartupJobRunner.java)** : Exécuté au démarrage si la planification est désactivée (`app.scheduler.enabled=false`). Il évalue les conditions, exécute le Batch si requis, puis arrête proprement la JVM.
+- **[ScheduledJobRunner.java](src/main/java/fr/abes/theses/batch/scheduler/ScheduledJobRunner.java)** : S'active si le planificateur est activé (`app.scheduler.enabled=true`). Il laisse l'application s'exécuter en continu et planifie des exécutions régulières via une expression Cron.
+- **[JobLauncherService.java](src/main/java/fr/abes/theses/batch/scheduler/JobLauncherService.java)** : Orchestrateur intermédiaire. Il génère les paramètres du job (comme la date d'export unique) et déclenche l'exécution du job.
+- **[JobRunDecider.java](src/main/java/fr/abes/theses/batch/scheduler/JobRunDecider.java)** : Évalue si le job doit tourner (gestion du mode test, du forçage `FORCE_RUN` et de la règle de temps de 6 mois).
+
+### ⚙️ Configuration globale (`/config`)
+
+- **[BatchConfig.java](src/main/java/fr/abes/theses/batch/config/BatchConfig.java)** : Configuration générale du Job Spring Batch. Déclare le Job, ses étapes (`Step`), et l'ensemble des beans requis (`RestClient`, `Reader`, `Processor`, `Writers`, `Tasklet`).
+
+### 📥 Lecture de données (`/reader`)
+
+- **[ThesesItemReader.java](src/main/java/fr/abes/theses/batch/reader/ThesesItemReader.java)** : Reader paginé interrogeant l'API de theses.fr en effectuant des appels REST successifs via le `RestClient` de Spring 3.
+
+### 🧹 Transformation des données (`/processor`)
+
+- **[ThesisProcessor.java](src/main/java/fr/abes/theses/batch/processor/ThesisProcessor.java)** : Reçoit les objets bruts de l'API et les convertit en DTO d'export après nettoyage (reformatage de dates, gestion des listes de personnes ou d'organisations).
+
+### 💾 Écriture et Structuration des fichiers (`/writer`)
+
+- **[ThesisCsvLineAggregator.java](src/main/java/fr/abes/theses/batch/writer/ThesisCsvLineAggregator.java)** : Formate l'objet d'export en une ligne CSV plate en ordonnant les 243 colonnes requises.
+- **[NdjsonLineAggregator.java](src/main/java/fr/abes/theses/batch/writer/NdjsonLineAggregator.java)** : Sérialise l'objet d'export en une ligne au format JSON standard.
+
+### 📤 Téléversement (`/tasklet`)
+
+- **[UploadTasklet.java](src/main/java/fr/abes/theses/batch/tasklet/UploadTasklet.java)** : Récupère les fichiers générés localement et les envoie par requêtes HTTP POST multipart à data.gouv.fr.
+
+### 📦 Modèles (`/model`)
+
+- Contient les structures de données brutes reçues de l'API (ex: `Thesis`, `Person`) et les structures cibles formatées (ex: `ExportThesis`, `ExportPerson`).
+
+---
+
+### 📡 Canaux de transmission des informations
+
+- **Propriétés globales :** Via l'injection de valeurs par `@Value` de Spring, alimentée par le fichier `.env` ou `application.properties`.
+- **Persistance historique :** Base de données H2 intégrée persistée localement dans `/data/h2db`. Elle permet à `JobRunDecider` (via `JobExplorer`) d'analyser l'historique des exécutions.
+- **Paramètres de Job (JobParameters) :** `JobLauncherService` calcule et injecte la date du jour `exportDate` lors du lancement. Grâce au `@StepScope` Spring Batch, cette date est lue par les writers (pour nommer les fichiers d'exports) et par le `UploadTasklet` (pour retrouver les chemins des fichiers locaux à téléverser).
+- **Flot orienté Chunk :** Le `ThesesItemReader` produit des objets `Thesis` (format API brute) qui transitent par le `ThesisProcessor` pour donner des objets `ExportThesis` (format DTO d'export), finalement sérialisés par les Writers sur le disque local.
+- **Fichiers physiques :** Le disque local sert de point de passage entre la génération (`fetchAndWriteStep`) et le téléversement (`UploadTasklet`).
+
+---
+
 ## 🚦 Modes d'Exécution & Variables de Configuration
 
 Le comportement de l'application est piloté par des variables d'environnement, configurables dans un fichier `.env` ou transmises lors du lancement de la JVM.

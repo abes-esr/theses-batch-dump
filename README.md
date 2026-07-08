@@ -47,4 +47,13 @@ docker run --env-file .env -v %cd%/data:/app/data abesesr/theses-batch-dump
 _(Sur Linux/macOS, remplacez `%cd%` par `$(pwd)`)_
 
 Le conteneur va exécuter le Batch et s'arrêter après la fin de la génération des exports (et du téléversement si ce dernier est activé).
-Si la planification en arrière-plan est activée (`SCHEDULER_ENABLED=true`), le conteneur restera actif pour exécuter le batch périodiquement.
+Si la planification en arrière-plan est activée (`SCHEDULER_ENABLED=true`), le cont�cuter les tests unitaires) :
+
+  ```bash
+  mvn clean package -DskipTests
+  ```
+
+- **Lancer le JAR produit** :
+  ```bash
+  java -jar target/theses-batch-dump-1.0.0.jar
+  ```
