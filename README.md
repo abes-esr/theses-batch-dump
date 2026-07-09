@@ -1,6 +1,6 @@
 # theses-batch-dump
 
-[![build-test-pubtodockerhub](https://github.com/abes-esr/theses-batch-dump/actions/workflows/build-test-pubtodockerhub.yml/badge.svg)](https://github.com/abes-esr/theses-batch-dump/actions/workflows/build-test-pubtodockerhub.yml) [![Docker Pulls](https://img.shields.io/docker/pulls/abesesr/theses-batch-dump.svg)](https://hub.docker.com/r/abesesr/theses-batch-dump/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/abesesr/theses-batch-dump.svg)](https://hub.docker.com/r/abesesr/theses-batch-dump/)
 
 Vous êtes sur le README usager. Si vous souhaitez accéder au README de développement, veuillez suivre ce lien : [README-dev](README-dev.md)
 
@@ -47,11 +47,11 @@ docker run --env-file .env -v %cd%/data:/app/data abesesr/theses-batch-dump
 _(Sur Linux/macOS, remplacez `%cd%` par `$(pwd)`)_
 
 Le conteneur va exécuter le Batch et s'arrêter après la fin de la génération des exports (et du téléversement si ce dernier est activé).
-Si la planification en arrière-plan est activée (`SCHEDULER_ENABLED=true`), le cont�cuter les tests unitaires) :
+Si la planification en arrière-plan est activée (`SCHEDULER_ENABLED=true`), le cont�cuter les tests unitaires) :
 
-  ```bash
-  mvn clean package -DskipTests
-  ```
+```bash
+mvn clean package -DskipTests
+```
 
 - **Lancer le JAR produit** :
   ```bash
