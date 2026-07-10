@@ -73,14 +73,16 @@ public class ThesesItemReader implements ItemReader<Thesis> {
             return;
         }
 
-        log.info("Recuperation des theses de l'API: debut={}, nombre={}", currentDebut, pageSize);
+        Integer nombre = modeTest ? Math.min(pageSize, MAX_ITEMS_FOR_TEST - currentDebut) : pageSize;
+
+        log.info("Recuperation des theses de l'API: debut={}, nombre={}", currentDebut, nombre);
 
         ThesesResponse response = restClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/theses/recherche/")
                         .queryParam("q", "*")
                         .queryParam("debut", currentDebut)
-                        .queryParam("nombre", pageSize)
+                        .queryParam("nombre", nombre)
                         .queryParam("filtres", "[Statut=\"soutenue\"]")
                         .build())
                 .retrieve()
@@ -101,7 +103,7 @@ public class ThesesItemReader implements ItemReader<Thesis> {
 
         // Si nous avons récupéré moins d'éléments que la taille de page demandée,
         // nous sommes arrivés à la fin du jeu de données.
-        if (currentBatch.size() < pageSize) {
+        if (currentBatch.size() < nombre) {
             log.info("Fin de la recuperation de l'API (derniere page incomplete).");
             isFinished = true;
         }
