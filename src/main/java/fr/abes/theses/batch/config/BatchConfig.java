@@ -26,6 +26,8 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.client.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.List;
 
@@ -36,12 +38,14 @@ import java.util.List;
 @Configuration
 @SuppressWarnings("null")
 public class BatchConfig {
+    private static final Logger log = LoggerFactory.getLogger(BatchConfig.class);
 
     /**
      * Bean RestClient configuré pour requêter l'API theses.fr.
      */
     @Bean
     public RestClient thesesRestClient(@Value("${app.theses.api-base-url}") String apiBaseUrl) {
+        log.info("Initialisation du RestClient de theses.fr avec l'URL de base : {}", apiBaseUrl);
         return RestClient.builder()
                 .baseUrl(apiBaseUrl)
                 .build();
