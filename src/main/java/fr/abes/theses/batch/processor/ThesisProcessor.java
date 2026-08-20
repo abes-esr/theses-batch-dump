@@ -28,7 +28,7 @@ public class ThesisProcessor implements ItemProcessor<Thesis, ExportThesis> {
 
         // 3. Directeurs de thèse
         List<ExportPerson> directeurs = null;
-        if (t.directeurs() != null) {
+        if (t.directeurs() != null && !t.directeurs().isEmpty()) {
             directeurs = t.directeurs().stream()
                 .map(d -> new ExportPerson(d.nom(), d.prenom(), d.ppn()))
                 .toList();
@@ -36,7 +36,7 @@ public class ThesisProcessor implements ItemProcessor<Thesis, ExportThesis> {
 
         // 4. Écoles doctorales
         List<ExportOrganization> ecoles = null;
-        if (t.ecolesDoctorales() != null) {
+        if (t.ecolesDoctorales() != null && !t.ecolesDoctorales().isEmpty()) {
             ecoles = t.ecolesDoctorales().stream()
                 .map(e -> new ExportOrganization(e.nom(), e.ppn(), null))
                 .toList();
@@ -53,10 +53,13 @@ public class ThesisProcessor implements ItemProcessor<Thesis, ExportThesis> {
         if ((langues == null || langues.isEmpty()) && t.langue() != null) {
             langues = List.of(t.langue());
         }
+        if (langues != null && langues.isEmpty()) {
+            langues = null;
+        }
 
         // 7. Membres du jury (examinateurs)
         List<ExportPerson> membres = null;
-        if (t.examinateurs() != null) {
+        if (t.examinateurs() != null && !t.examinateurs().isEmpty()) {
             membres = t.examinateurs().stream()
                 .map(m -> new ExportPerson(m.nom(), m.prenom(), m.ppn()))
                 .toList();
@@ -64,7 +67,7 @@ public class ThesisProcessor implements ItemProcessor<Thesis, ExportThesis> {
 
         // 8. Partenaires de recherche
         List<ExportOrganization> partenaires = null;
-        if (t.partenairesDeRecherche() != null) {
+        if (t.partenairesDeRecherche() != null && !t.partenairesDeRecherche().isEmpty()) {
             partenaires = t.partenairesDeRecherche().stream()
                 .map(p -> new ExportOrganization(p.nom(), p.ppn(), null))
                 .toList();
@@ -78,31 +81,35 @@ public class ThesisProcessor implements ItemProcessor<Thesis, ExportThesis> {
 
         // 10. Rapporteurs
         List<ExportPerson> rapporteurs = null;
-        if (t.rapporteurs() != null) {
+        if (t.rapporteurs() != null && !t.rapporteurs().isEmpty()) {
             rapporteurs = t.rapporteurs().stream()
                 .map(r -> new ExportPerson(r.nom(), r.prenom(), r.ppn()))
                 .toList();
         }
 
         // 11. Sujets dispatchés par langue (fr/en/autre)
-        String sujetFr = null;
-        String sujetEn = null;
+        List<String> sujetFr = new ArrayList<>();
+        List<String> sujetEn = new ArrayList<>();
         List<String> sujetAutre = new ArrayList<>();
         if (t.sujets() != null) {
             for (Subject s : t.sujets()) {
                 if (s.libelle() != null) {
                     if (s.langue() == null || "fr".equalsIgnoreCase(s.langue())) {
-                        sujetFr = cleanText(s.libelle());
+                        sujetFr.add(cleanText(s.libelle()));
                     } else if ("en".equalsIgnoreCase(s.langue())) {
-                        sujetEn = cleanText(s.libelle());
+                        sujetEn.add(cleanText(s.libelle()));
                     } else {
                         sujetAutre.add(cleanText(s.libelle()));
                     }
                 }
             }
         }
-        ExportSujets sujets = (sujetFr != null || sujetEn != null || !sujetAutre.isEmpty())
-            ? new ExportSujets(sujetFr, sujetEn, sujetAutre.isEmpty() ? null : sujetAutre)
+        ExportSujets sujets = (!sujetFr.isEmpty() || !sujetEn.isEmpty() || !sujetAutre.isEmpty())
+            ? new ExportSujets(
+                sujetFr.isEmpty() ? null : sujetFr,
+                sujetEn.isEmpty() ? null : sujetEn,
+                sujetAutre.isEmpty() ? null : sujetAutre
+              )
             : null;
 
         // 12. Sujets Rameau (uniquement les libellés sous forme de liste de chaînes)
@@ -117,20 +124,38 @@ public class ThesisProcessor implements ItemProcessor<Thesis, ExportThesis> {
         // 13. Titres (fr/en)
         ExportTitres titres = new ExportTitres(cleanText(t.titrePrincipal()), cleanText(t.titreEN()), null);
 
-        // 14. OAI Set Specs (par exemple ddc:540 si chimie, sinon déduction ou vide)
-        List<String> oaiSpecs = null;
-        if (t.discipline() != null && "chimie".equalsIgnoreCase(t.discipline().trim())) {
-            oaiSpecs = List.of("ddc:540");
+        // 14. OAI Set Specs (on utilise en priorité oaiSetNames retourné par l'API, sinon repli sur l'ancienne déduction de discipline)
+        List<String> oaiSpecs = t.oaiSetNames();
+        if (oaiSpecs == null || oaiSpecs.isEmpty()) {
+            if (t.discipline() != null && "chimie".equalsIgnoreCase(t.discipline().trim())) {
+                oaiSpecs = List.of("ddc:540");
+            }
         }
 
         // Reformatage de la date de soutenance (dd/MM/yyyy -> yyyy-MM-dd)
         String dateSoutenanceClean = reformatDate(t.dateSoutenance());
 
-        // Retourne le DTO d'export historique
+        // 15. Résumés par langue (fr/en/autre) extraits de la Map de l'API après nettoyage
+        ExportResumes resumes = null;
+        if (t.resumes() != null && !t.resumes().isEmpty()) {
+            String fr = cleanText(t.resumes().get("fr"));
+            String en = cleanText(t.resumes().get("en"));
+            List<String> autreResumes = new ArrayList<>();
+            for (java.util.Map.Entry<String, String> entry : t.resumes().entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (value != null && !value.trim().isEmpty() && !"fr".equalsIgnoreCase(key) && !"en".equalsIgnoreCase(key)) {
+                    autreResumes.add(cleanText(value));
+                }
+            }
+            resumes = new ExportResumes(fr, en, autreResumes.isEmpty() ? null : autreResumes);
+        }
+
+        // Retourne le DTO d'export historique complété par les nouvelles informations
         return new ExportThesis(
             cleanAccessible,
             auteur,
-            null, // cas
+            t.cas(), // cas extrait de l'API
             t.codeEtab(),
             dateSoutenanceClean,
             directeurs,
@@ -145,13 +170,15 @@ public class ThesisProcessor implements ItemProcessor<Thesis, ExportThesis> {
             partenaires,
             president,
             rapporteurs,
-            null, // resumes
+            resumes, // résumés structurés et nettoyés
             cleanSource,
             cleanStatus,
             sujets,
             rameaux,
             "non", // these_sur_travaux
-            titres
+            titres,
+            reformatDate(t.dateCines()), // date_cines extrait et reformaté
+            t.numSujetSansS() // num_sujet_sans_s
         );
     }
 
@@ -170,10 +197,17 @@ public class ThesisProcessor implements ItemProcessor<Thesis, ExportThesis> {
         return dateStr;
     }
 
+    /**
+     * Nettoie le texte en supprimant les antislashs multiples, en supprimant
+     * les séparateurs de ligne Unicode inhabituels (LS \u2028 et PS \u2029)
+     * en les remplaçant par des sauts de ligne ordinaires, et en rognant les espaces.
+     */
     private String cleanText(String text) {
         if (text == null) {
             return null;
         }
-        return text.replaceAll("\\\\+", "").trim();
+        String cleaned = text.replaceAll("\\\\+", "");
+        cleaned = cleaned.replace("\u2028", "\n").replace("\u2029", "\n");
+        return cleaned.trim();
     }
 }

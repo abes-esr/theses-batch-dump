@@ -84,6 +84,7 @@ public class ThesesItemReader implements ItemReader<Thesis> {
                         .queryParam("debut", currentDebut)
                         .queryParam("nombre", nombre)
                         .queryParam("filtres", "[Statut=\"soutenue\"]")
+                        .queryParam("viewFull", "true")
                         .build())
                 .retrieve()
                 .body(ThesesResponse.class);

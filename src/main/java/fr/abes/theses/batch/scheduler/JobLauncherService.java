@@ -29,6 +29,9 @@ public class JobLauncherService {
     @Value("${app.mode-test:false}")
     private boolean modeTest;
 
+    @Value("${app.run-time:0}")
+    private long cmdRunTime;
+
     /**
      * Constructeur injectant les composants Spring Batch requis.
      */
@@ -56,10 +59,12 @@ public class JobLauncherService {
                 String exportDate = java.time.LocalDate.now()
                         .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
-                // Ajout d'un paramètre temporel unique pour forcer une nouvelle instance de Job
-                // à chaque exécution, et passage de la date d'export
+                // Si un run-time spécifique est passé en paramètre, on l'utilise pour
+                // permettre la reprise du job existant (sinon on génère un nouveau timestamp).
+                long runTimeVal = (cmdRunTime > 0) ? cmdRunTime : System.currentTimeMillis();
+
                 JobParameters params = new JobParametersBuilder()
-                        .addLong("runTime", System.currentTimeMillis())
+                        .addLong("runTime", runTimeVal)
                         .addString("exportDate", exportDate)
                         .toJobParameters();
 

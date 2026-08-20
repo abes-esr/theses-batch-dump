@@ -123,8 +123,8 @@ public class ThesisCsvLineAggregator implements LineAggregator<ExportThesis> {
         for (int i = 0; i <= 7; i++) {
             addString(row, sujetsAutre, i);
         }
-        row.add(t.sujets() != null && t.sujets().en() != null ? t.sujets().en() : "");
-        row.add(t.sujets() != null && t.sujets().fr() != null ? t.sujets().fr() : "");
+        row.add(t.sujets() != null && t.sujets().en() != null ? String.join("||", t.sujets().en()) : "");
+        row.add(t.sujets() != null && t.sujets().fr() != null ? String.join("||", t.sujets().fr()) : "");
 
         // 22. sujets_rameau (lexicographique : 0, 1, 10..19, 2, 20..29, 3, 30..39, 4, 40..49, 5, 50..54, 6, 7, 8, 9)
         int[] rameauIndices = {

@@ -26,6 +26,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.client.RestClient;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
@@ -46,8 +47,15 @@ public class BatchConfig {
     @Bean
     public RestClient thesesRestClient(@Value("${app.theses.api-base-url}") String apiBaseUrl) {
         log.info("Initialisation du RestClient de theses.fr avec l'URL de base : {}", apiBaseUrl);
+        
+        // Configuration des timeouts de connexion et lecture à 10 secondes
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(10000); // 10s
+        requestFactory.setReadTimeout(10000);    // 10s
+
         return RestClient.builder()
                 .baseUrl(apiBaseUrl)
+                .requestFactory(requestFactory)
                 .build();
     }
 

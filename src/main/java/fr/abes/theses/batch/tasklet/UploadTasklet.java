@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
@@ -96,18 +98,21 @@ public class UploadTasklet implements Tasklet {
                 localFileName, formatName, targetUploadName, file.length());
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new FileSystemResource(file) {
-            @Override
-            public String getFilename() {
-                return targetUploadName;
-            }
-        });
+        
+        HttpHeaders partHeaders = new HttpHeaders();
+        partHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        partHeaders.setContentDispositionFormData("file", targetUploadName);
+        
+        HttpEntity<FileSystemResource> filePart = new HttpEntity<>(new FileSystemResource(file), partHeaders);
+        body.add("file", filePart);
 
+        // Note : Ne pas spécifier explicitement le Content-Type MULTIPART_FORM_DATA.
+        // Spring s'en charge automatiquement lors de l'envoi du corps contenant des HttpEntity
+        // et génère la chaîne de frontière (boundary) indispensable pour l'API.
         restClient.post()
                 .uri("https://www.data.gouv.fr/api/1/datasets/{datasetId}/resources/{resourceId}/upload/",
                         datasetId, resourceId)
                 .header("X-API-KEY", apiKey)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(body)
                 .retrieve()
                 .toBodilessEntity();
